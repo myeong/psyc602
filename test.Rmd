@@ -1,0 +1,64 @@
+Lab 1
+========================================================
+
+#### Create Data
+```{r}
+data(anscombe)
+my.data <- anscombe[,c("y1","x1")]
+summary(my.data)
+```
+
+
+### Simple Regression
+
+This is a simple regression
+
+```{r}
+fit1 <- lm(y1~x1, data=my.data)
+fit1 
+summary(fit1)
+
+fit2 <- update(fit1, scale(y1)~scale(x1))
+summary(fit2)
+
+```
+
+
+# Question 5
+
+```{r}
+library(ggplot2)
+
+my.data$e <- residuals(fit1)
+my.data$y.hat <- fitted(fit1)
+
+qplot(1:nrow(my.data), y1, data=my.data, main="Time Series - y1", xlab="Obs #", ylab="Values")
+
+
+```
+
+
+```{r, results='asis'}
+library(xtable)
+
+my.cor <- cor(my.data)
+print(xtable(my.cor), type="html")
+
+```
+
+
+```{r}
+library(GGally)
+
+ggpairs(my.data, lower=list(continuous="smooth"))
+
+
+```
+
+##### Lab 2
+
+```{r}
+fit1 <- lm(y~x1+x2)
+update(fit1, scale(y)~scacle(x1)+scale(x2))
+```
+

@@ -1,0 +1,81 @@
+Lab 4
+========================================================
+
+# ANOVA, t-test, and Regression (Overview)
+
+- An example of MOM_Highschool vs. Child's IQ
+- R-squared: % of variance
+- t-test? two groups are not overlapping -- it's significant!
+- Regression? drawing a line.
+- Interactions between categorical (mom high) vs. continuous (mom IQ)
+  - One more term is added: mom_hs X mom_iq  
+  - All you can say with this interaction term is that two slopes are different.
+  
+
+- Assumptions and diagnostics (in order of importance)
+  - Validity
+  - Additivity and Linearity
+  - Independence of errors
+  - Equal variance or errors
+  - Normality of errors
+
+# ANOVA Stuff II
+
+## Fixed versus Random
+- $Y_{ij}$: Weight for every chicken.
+- $\mu$: population mean
+- $Y_{ij} \sim N(\mu, \sigma^2)$: the model is an interpretation of this distribution.
+- Models are same.
+- Difference?
+  - Research question: Does this matter? vs. What affects the result?
+  - What we are doing about error term.
+  - Variable's are random variable vs. fixed variable
+
+```{r}
+mydat <- ChickWeight
+head(mydat)
+fit1 <- weight~Diet
+summary(aov(fit1, mydat))
+
+```
+
+- aov fundtion is another way of doing ANOVA
+- 1 - (F value, df_between, df_within) 
+
+## Random?
+```{r}
+fit2 <- weight~Error(Diet)
+summary(aov(fit2, mydat))
+```
+
+
+- 1 is the grand mean (just put there)
+```{r}
+fit3 <- weight~Diet+Error(1/Diet)
+summary(aov(fit3, mydat))
+```
+
+- Not yet learned: To show Why Random model matters
+
+```{r}
+fit4 <- weight~Time+Error(Chick/Time)
+summary(aov(fit4,mydat))
+```
+
+
+# Scheffe's Test
+```{r}
+library(agricolae)
+mc.scheffe <- scheffe.test(aov(fit1,mydat), "Diet", group=FALSE, console=TRUE)
+mc.scheffe$comparison
+```
+
+- So far, all the things are pairwise (Bonferoni?)
+- Scheffe does multiple comparisons (between groups)
+- More conservative than Bonferoni
+
+```{r}
+mc.bonf <- with(mydat, pairwise.t.test(weight, Diet, p.adj="bonf"))
+mc.bonf
+```
+

@@ -1,0 +1,69 @@
+Pilot Test - How cultural background affects people's perception of new places?
+========================================================
+
+# The extent to which people know places VS. Answer correctness
+```{r}
+library(dplyr)
+data1 <- read.csv("C:/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/fam-correct.csv")
+group_by(data1, id)
+my.dat <- with(data1, data.frame(Familiarity=Familiarity, Correctness=Correctness))
+fit1 <- Familiarity~Correctness
+
+summary(aov(fit1, my.dat))
+
+```
+
+
+# Cultural Background and People's Perception of Places (When they recognize places)
+```{r}
+library(arm)
+library(ggplot2)
+library(GGally)
+data2 <- read.csv("C:/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/culture-landmark.csv")
+my.dat2 <- with(data2, data.frame(CulturalBackground=Background, LandmarkAnswers=RecogRate))
+my.dat21 <- na.omit(my.dat2)
+fit2 <- lm(LandmarkAnswers~CulturalBackground, data=my.dat21)
+
+summary(fit2)
+
+
+my.dat21$e = residuals(fit2)
+my.dat21$landmark.hat = fitted(fit2)
+p <- ggplot(aes(x=CulturalBackground, y=LandmarkAnswers), data=my.dat21) + geom_point(color="steelblue", size=3)
+
+p <- p + geom_smooth(method="lm", se=FALSE)
+p
+
+fit3 <- update(fit2, scale(LandmarkAnswers) ~ scale(CulturalBackground))
+summary(fit3)
+
+ggpairs(my.dat21, lower=list(continuous="smooth"))
+
+```
+
+# Cultural Background and People's Guess of Places (When they don't recognize places)
+```{r}
+my.dat3 <- with(data2, data.frame(CulturalBackground=Background, LandmarkAnswers=GuessRate))
+fit4 <- lm(LandmarkAnswers~CulturalBackground, data=my.dat3)
+
+summary(fit4)
+
+
+my.dat3$e = residuals(fit4)
+my.dat3$landmark.hat = fitted(fit4)
+p <- ggplot(aes(x=CulturalBackground, y=LandmarkAnswers), data=my.dat3) + geom_point(color="steelblue", size=3)
+
+p <- p + geom_smooth(method="lm", se=FALSE)
+p
+
+fit5 <- update(fit4, scale(LandmarkAnswers) ~ scale(CulturalBackground))
+summary(fit5)
+
+```
+
+- y = 1.190 + 3.965X1
+
+```{r}
+ggpairs(my.dat3, lower=list(continuous="smooth"))
+```
+

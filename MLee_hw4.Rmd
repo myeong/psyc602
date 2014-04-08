@@ -1,0 +1,128 @@
+Homework 4 (3/27)
+========================================================
+
+Myeong Lee
+--------------------------------------------------------
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+data1 <- read.csv("C:/Users/myeong/Desktop/hw4.csv")
+
+my.dat <- data1[,c("y", "Group")]
+my.dat$Group <- factor(my.dat$Group, levels = c(1,2,3,4))
+my.dat
+```
+
+# Part I
+
+### 1. Model
+- Y = $\beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \epsilon$
+
+### 2. H0
+
+- $H_0: \beta_1 = \beta_2 = \beta_3 = 0$ or $\mu_1 = \mu_2 = \mu_3 = \mu_4$
+- There is no systematic difference among the group means. All the groups have same means. 
+
+### 3. H1
+
+- $H_1: \beta_j \neq 0$, $Not H_0$
+- There are systematic differences among group means. 
+
+### 4. Error Rate $\alpha$
+
+- at $\alpha = 0.05$, critical t(2)=4.30
+- actual $\alpha$ = 1 - $0.95^3$ = .142625
+- $\frac{.142625}{4}$ = .0356 < .0.05
+- So, alpha can be set as $\alpha = P(P|H_0) = 0.05$ 
+  
+### 5. Regression form
+```{r}
+fit1 <- lm(y~Group, my.dat)
+coef(summary(fit1))
+```
+
+### 6. One Predictor
+```{r}
+fit0 <- lm(y~1, my.dat)
+coef(summary(fit0))
+
+anova(fit0, fit1)
+
+```
+- The model that includes the categorical is better, since P-value shows that it rejects the null hypothesis in the significance level 0.05.
+
+### 7. Plot
+```{r}
+my.dat$e <- residuals(fit1)
+my.dat$y.hat <- fitted(fit1)
+frame1 <- data.frame(y=my.dat$y, y_hat=my.dat$y.hat, e=my.dat$e, X=my.dat$Group)
+
+library(GGally)
+
+ggpairs(frame1, lower=list(continuous="smooth"))
+
+```
+
+### 8. Data frame
+```{r}
+frame1
+```
+
+### 9. Correlation
+```{r, results='asis'}
+library(xtable)
+frame2 <- data.frame(y=my.dat$y, y_hat=my.dat$y.hat, e=my.dat$e)
+my.cor <- cor(frame2)
+print(xtable(my.cor), type="html")
+
+```
+
+### 10, 11. Explanation
+- The data are not that systematically differentiated between groups. y and y_hat are correlated, while y and e are also highly correlated: cannot be said that samples are systematically differentiated. 
+
+
+# Part II
+```{r}
+contrasts(my.dat$Group)
+model.matrix(y~Group, my.dat)
+
+contrast.lee <- matrix(NA,4,4)
+rownames(contrast.lee) <- c("GM", ":12v34", ":2v3", ":1v4")
+contrast.lee[1,] <- 1/4
+contrast.lee[2,] <- c(-1,-1,1,1)
+contrast.lee[3,] <- c(0,-1,1,1)
+contrast.lee[4,] <- c(-1,0,0,1)
+contrasts(my.dat$Group) <- solve(contrast.lee)[,-1]
+contrast.lee
+
+solve(contrast.lee)
+
+fit2 <- lm(y ~ Group, my.dat)
+mus <- aggregate(y ~ Group, my.dat, mean)[, 2]
+L.a <- contrast.lee
+
+SSL <- sum(L.a * mus)^2/(sum(L.a^2)/5)
+SSL/anova(fit2)["Residuals", "Mean Sq"]
+
+coef(summary(fit2))[, "t value"]^2
+```
+
+- I am not sure how to set the contrast matrix...
+
+# Part III
+```{r}
+contrasts(my.dat$Group) <- cbind(":12v34" = c(-1,-1,1,1),
+                                ":1v4" = c(-1,0,0,1),
+                                ":2v3" = c(0,-1,1,0))
+cbind(":12v34" = c(-1,-1,1,1),":1v4" = c(-1,0,0,1),":2v3" = c(0,-1,1,0))
+fit3 <- lm(y ~ Group, my.dat)
+mus <- aggregate(y ~ Group, my.dat, mean)[, 2]
+L.a <- contrast.lee
+
+SSL <- sum(L.a * mus)^2/(sum(L.a^2)/5)
+SSL/anova(fit3)["Residuals", "Mean Sq"]
+
+coef(summary(fit3))[, "t value"]^2
+```
+
+- The result shows that the treatment 1 and 2 are systematically different from the controls (3 and 4).

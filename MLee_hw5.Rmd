@@ -1,0 +1,48 @@
+Homework 5 (4/8)
+========================================================
+
+Myeong Lee
+--------------------------------------------------------
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+data1 <- read.csv("C:/Users/myeong/Desktop/hw5.csv")
+
+library(reshape2)
+my.data <- melt(data1, id.vars="subj",
+                variable.name="altimeter",
+                value.name="readability") # aggregate all data to a single column.
+head(my.data)
+
+```
+
+# Part I
+
+### 1. Model
+- $Y_{ij} = \mu + \alpha_j + \pi_i + \epsilon_{ij}$
+
+### 2. H0
+
+## Treatment A
+- H0: $\alpha_j = 0 for all j$
+- There is no systematic difference among the group means. All the groups have same means. 
+
+## Block
+- H0: $\alpha_{\pi}^2 = 0$
+
+### 3. H1
+
+## Treatment A
+- H1: $\alpha_j \neq 0 for some j$, not H0
+- There are systematic differences among group means. 
+
+## Block
+- H1: $\alpha_{\pi}^2 \neq 0$
+
+### 4. Error Rate $\alpha$
+
+- at $\alpha = 0.05$, critical t(2)=4.30
+- actual $\alpha$ = 1 - $0.95^3$ = .142625
+- $\frac{.142625}{4}$ = .0356 < .0.05
+- So, alpha can be set as $\alpha = P(P|H_0) = 0.05$ 
+

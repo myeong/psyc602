@@ -1,0 +1,167 @@
+Homework 3
+========================================================
+
+Myeong Lee
+--------------------------------------------------------
+
+```{r}
+options(contrasts = c("contr.sum", "contr.poly"))
+data1 <- read.csv("C:/Users/myeong/Desktop/hw3.csv")
+
+my.dat <- data1[,c("y", "Group")]
+my.dat$Group <- factor(my.dat$Group, levels = c(1,2,3,4))
+
+```
+
+
+## Part I
+
+### 1. The model under investigation
+
+$y_{i(j)} = \mu + \alpha_j + \varepsilon_{i(j)}$
+
+### 2. H0
+
+- $H_0: \alpha_j = 0$, $n\sigma_M^2 = \sigma^2$
+
+- There is no systematic difference among the group means. All the groups have same means. 
+
+### 3. H1
+
+- $H_1: \alpha_j \neq 0$, $n\sigma_M^2 > \sigma^2$
+  
+- There are systematic differences among group means. 
+
+### 4. Error Rate $\alpha$
+
+- at $\alpha = 0.05$, critical t(2)=4.30
+- actual $\alpha$ = 1 - $0.95^3$ = .142625
+- $\frac{.142625}{4}$ = .0356 < .0.05
+- So, alpha can be set as $\alpha = P(P|H_0) = 0.05$ 
+  
+### 5. ANOVA 
+
+##### Fixed model
+```{r}
+fit1 <- y~Group
+summary(aov(fit1, my.dat))
+```
+
+```{r}
+fit1.1 <- lm(y ~ Group, data=my.dat)
+summary(fit1.1)
+```
+
+```{r}
+anova(fit1.1)
+```
+
+
+##### Random model
+```{r}
+fit2 <- y~Error(Group)
+summary(aov(fit2, my.dat))
+```
+
+### 6. Plot
+
+##### y - observation number
+```{r}
+library(ggplot2)
+my.dat$e <- residuals(fit1.1)
+my.dat$y.hat <- fitted(fit1.1)
+
+qplot(1:nrow(my.dat), y, data=my.dat, main="Time Series - y", xlab="Obs #", ylab="Values")
+
+```
+
+##### e - observation number
+```{r}
+qplot(1:nrow(my.dat), e, data=my.dat, main="Time Series - e", xlab="Obs #", ylab="residuals")
+
+```
+
+
+### 7. Data frame
+```{r}
+frame1 <- data.frame(y=my.dat$y, y_hat=my.dat$y.hat, e=my.dat$e)
+frame1
+```
+
+### 8. Correlations
+
+```{r, results='asis'}
+library(xtable)
+
+my.cor <- cor(frame1)
+print(xtable(my.cor), type="html")
+
+```
+
+### 9. Pairwise plots
+```{r}
+library(GGally)
+
+ggpairs(frame1, lower=list(continuous="smooth"))
+
+```
+
+### 10. Plot of the mean of y
+
+```{r}
+sub1 <- subset(my.dat, Group==1)
+sub1.mean <- mean(sub1$y)
+
+sub2 <- subset(my.dat, Group==2)
+sub2.mean <- mean(sub2$y)
+
+sub3 <- subset(my.dat, Group==3)
+sub3.mean <- mean(sub3$y)
+
+sub4 <- subset(my.dat, Group==4)
+sub4.mean <- mean(sub4$y)
+
+subtable <- data.frame(y=c(sub1.mean, sub2.mean, sub3.mean, sub4.mean), Group=c(1,2,3,4))
+
+qplot(1:nrow(subtable), y, data=subtable, main="Means of y", xlab="Group Membership Variable", ylab="Mean of y")
+
+```
+
+### 13. Interpretation
+
+- Since F value is 4 on df(3,12) and p-value is .035, it rejects null hypothesis at $\alpha$= .05, but the significance is not that high.
+
+
+## Part II
+
+### 1. What is it?
+- Compare each group to determine whether they are systematically differ, and to determine $\alpha$
+
+### 2. Bonferroni
+
+```{r}
+mc.bonf <- with(my.dat, pairwise.t.test(y, Group, p.adj="bonf"))
+mc.bonf
+```
+
+### 3. Scheffe's
+
+```{r}
+library(agricolae)
+mc.scheffe <- scheffe.test(aov(fit1, my.dat), "Group", group=FALSE, console=TRUE)
+mc.scheffe$comparison
+```
+
+
+### 4. Benefits
+
+- Through Banferroni and Scheffe's test, I can see which groups are not different from each other. Since Scheffe's tests all possible pairs, it is good to see the differences. 
+
+
+### 5. Difference between the two tests
+
+- Scheffe's test is more conservative since it does multiple comparisons while Bonferroni does pairwise comparisons.
+
+### 6. More interpretation
+
+- Group 1 and 3 are somewhat systematically different, but other groups are not different that much (in a systematic manner). Significance levels are not that high.

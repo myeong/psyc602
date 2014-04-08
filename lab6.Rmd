@@ -1,0 +1,132 @@
+Lab 6 (4/3)
+========================================================
+
+# Randomized block?
+- Repeated measure - single person is a block.
+- Subjects controlling variance themselves
+- Concepts mostly coming from Kirk book.
+
+# Randomized block RB-p
+- ANOVA model: $Y_{ij} = \mu + \alpha_j + \pi_i + \epsilon_{ij}$
+- $\mu = GM$
+- $\alpha_j = \mu_{.j} - \mu$
+- $\pi_i = \mu_{i.} - \mu$: the number of blocks (n). Random variable, normal distribution. 0 mean.
+- $\epsilon_{ij} = Y_{ij} - \mu_{.j} - \mu_{i.} + \mu$
+
+# SS's
+- $SS_{total} = SS_A + SS_{Block} + SS_{RES}$
+- $SS_{total} = [Y_{ij} - \bar{Y_{..}}]^2$
+
+# Hypotheses
+## Treatment A
+- H0: $\alpha_j = 0 for all j$
+- H1: not H0
+- F = MS_a / MS_res = SSA/(p-1) / SSres/(n-1)(p-1)
+
+## Block
+- H0: $\alpha_{\pi}^2 = 0$
+- H1: $\alpha_{\pi}^2 \neq 0$
+- F = MS_block / MS_res = SS_block/(n-1) / ...
+
+# Data
+- 4 Altimeters
+- Fixed. 
+- Conceptually if fixed 
+  - What's the level of drug's power
+  - if random - Does it work?
+  
+```{r}
+my.data <- read.csv("C:/Users/myeong/Desktop/alt.csv")
+my.data
+```
+
+- If subj is number, it means something. It should be factor.
+
+## Data format
+```{r}
+library(reshape2)
+options(contrasts=c("contr.sum", "contr.poly")) #this gives a same result to SPSS, sum to 0.
+
+my.data <- melt(my.data, id.vars="subj",
+                variable.name="altimeter",
+                value.name="readability") # aggregate all data to a single column.
+head(my.data)
+
+```
+
+## Fit CR (Completely Randomized) Model
+- No block anymore. $\pi$ part would be taken out.
+- Don't care about subj.
+
+### Fit
+```{r}
+mod.cr <- lm(readability~altimeter, my.data)
+
+```
+
+### ANOVA
+```{r}
+anova(mod.cr)
+```
+
+## Fit RB (Randomized Block) Model
+- subj is regarded as error here.
+
+### Fit
+```{r}
+my.data$subj <- factor(my.data$subj)
+mod.rb <- lm(readability~altimeter+subj, my.data)
+anova(mod.rb)
+```
+
+### ANOVA
+```{r}
+anova(mod.rb)
+```
+
+# Interaction?
+```{r}
+mod.full <- lm(readability~altimeter*subj, my.data)
+anova(mod.full)
+my.data
+```
+
+# Turkey's 1-df Test for Non-additivity
+```{r}
+library(asbio)
+tukey.add.test(my.data$readability,
+                my.data$subj,
+                my.data$altimeter)
+```
+
+# Standard Errors
+```{r}
+dat <- read.csv("C:/Users/myeong/Desktop/alt.csv")
+summary(dat)
+
+# First reshape
+dat1 <- melt(dat, id.var="subj")
+summary(dat1)
+
+#Boxplots are easy/informative
+require(ggplot2)
+qplot(variable, value, data= dat1, geom="boxplot") + theme_classic(base_size=24)
+
+#Second reshape
+require(plyr)
+dat2 <- ddply(dat1, .(variable), summarise, means = mean(value), 
+              ses = sd(value)/sqrt(length(value)))  #standard errors
+summary(dat2)
+
+#Error bars are also appropriate
+qplot(variable, means, data = dat2, size =2) +
+  geom_errorbar(aes(ymin=means - ses, ymax=means + ses), width=.5, size=1 ) +
+  theme_classic(base_size=24)
+
+#Other interesting possibilities, called spagetti plot
+qplot(variable, value, data = dat1, geom="boxplot") +
+  geom_line(aes(color = factor(subj), group = factor(subj)), size=1.5 ) +
+  theme_classic(base_size=24)
+
+```
+

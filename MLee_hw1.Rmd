@@ -1,0 +1,120 @@
+Homework 1
+========================================================
+
+Myeong Lee
+--------------------------------------------------------
+  
+### Task 1
+  
+##### H0 in formal expression
+
+$\rho = \frac{\sum(z_y Z_X)}{N} = 0$
+
+##### H0 in words expression
+- There is no relationship between X and y in the population. Any difference from zero found in the sample is due to chance or random factors.
+
+
+### Task 2
+  
+##### H1 in formal expression
+$\rho = \frac{\sum(z_y Z_X)}{N} \neq 0$
+
+##### H1 in words expression
+- There is a positive or negative relationship between X and y in the population. 
+
+
+### Task 3: Margin of error $\alpha$
+```{r}
+data1 <- read.csv("C:/Users/myeong/Desktop/hw1.csv")
+data1
+rz.ci <- function(N, conf.level = 0.95){
+  zr.se <- 1/(N - 3)^0.5
+  moe <- qnorm(1 - (1 - conf.level)/2) * zr.se  
+}
+
+rz.ci(nrow(data1), 0.95)[1]
+```
+
+
+### Task 4: Regression
+```{r}
+fit1 <- lm(y~X, data=data1)
+summary(fit1)
+
+fit2 <- update(fit1, scale(y)~scale(X))
+summary(fit2)
+```
+
+
+### Task 5: Raw-score and the Standardized Prediction Equation
+
+##### Raw-score Prediction Equation
+
+- Y = 15.286 + 4.179X + e
+
+##### Standardized Prediction Equation
+
+- Y = 0.968X  
+
+
+### Task 6: Time-series plots of y and e
+
+##### y - observation number
+```{r}
+library(ggplot2)
+data1$e <- residuals(fit1)
+data1$y.hat <- fitted(fit1)
+
+qplot(1:nrow(data1), y, data=data1, main="Time Series - y", xlab="Obs #", ylab="Values")
+
+```
+
+##### e - observation number
+```{r}
+qplot(1:nrow(data1), e, data=data1, main="Time Series - e", xlab="Obs #", ylab="residuals")
+
+```
+
+
+### Task 7: data.frame with y, X, y_hat, and e for each observation
+
+```{r}
+frame1 <- data.frame(y=data1$y, X=data1$X, y_hat=data1$y.hat, e=data1$e)
+frame1
+```
+
+
+### Task 8: Correlations
+```{r, results='asis'}
+library(xtable)
+
+my.cor <- cor(data1)
+print(xtable(my.cor), type="html")
+
+```
+
+### Task 9: Pairwise scatter plots and correlations
+```{r}
+library(GGally)
+
+ggpairs(data1, lower=list(continuous="smooth"))
+
+```
+
+### Task 10: Intercorrelations found
+
+- y and X are closely, positively correlated with the coeff 0.97.
+- y and e are loosely correlated with the coeff 0.25.
+- y.hat and y are very closely correlated (coeff 0.968) since the error is very small in this regression.
+- X and y.hat are perfectly correlated since they are predicted values.
+- X and e are not correlated (coeff=0) by definition.
+- e and y.hat are not correlated by definition.
+
+### Task 11: Interpret the Results
+
+```{r}
+anova(fit1)
+```
+- In the hypothesis test, F-value is 73.835 and the significance level is very high, satisfying 0.04% significance level. 
+
+

@@ -1,0 +1,319 @@
+<script type="text/javascript"
+       src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+ MathJax.Hub.Config({
+   tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+ });
+</script>
+
+Simple Regression
+========================================================
+author: Jeff/Joe
+date: `r format(Sys.time(), "%a %b %d %Y")`
+transition: none
+font-family: 'Helvetica'
+
+***
+<br />
+```{r, echo=FALSE}
+require(stats); require(graphics)
+##-- now some "magic" to do the 4 regressions in a loop:
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+}
+
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "blue")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+par(op)
+```
+
+```{r setup, include=FALSE, echo=FALSE}
+require(knitr)
+opts_chunk$set(cache=TRUE, fig.align='center')
+options(digits = 3)
+```
+
+Load Some Data
+===
+* Load Data
+```{r}
+my.dat <- with(anscombe, 
+               data.frame(X=x1, y=y1))
+my.dat
+
+```
+
+Simple Regression
+===
+incremental: true
+* Population Equation
+  * $y = \beta_0 + \beta_1X + \varepsilon$
+* Sample Equation
+  * $y = b_0 + b_1X + e$
+* Regression Equation
+  * $\hat{y} = b_0 + b_1X$
+* Null Hypothesis
+  * $H_0: \beta_0 = 0$
+
+Fit Regression in R
+===
+incremental: true
+* Fit the model
+```{r}
+fit1 <- lm(y~X, data=my.dat)
+```
+* Summarize the fitted model with `display()`
+```{r}
+library(arm)
+display(fit1)
+```
+
+Fit Regression in R (ctd)
+===
+incremental: true
+* Test for $b_1$
+  * $t = \frac{b_1}{se(b_1)}$
+```{r}
+display(fit1)
+```
+
+Visualize Regression
+===
+incremental: true
+* Add the variables `y.hat` (fitted values) and `e` (residuals) to your `data.frame`
+```{r}
+my.dat$y.hat <- fitted(fit1)
+my.dat$e <- residuals(fit1)
+```
+* Plot a scatterplot of `y` versus `X` using `qplot`
+```{r}
+library(ggplot2)
+p <- ggplot(aes(x=X, y=y), data=my.dat) + 
+     geom_point(color="steelblue", size=5)
+```
+
+Visualize Regression (ctd)
+===
+incremental: true
+```{r}
+p
+```
+
+Visualize Regression (ctd)
+===
+incremental: true
+* Add regression line
+```{r}
+p <- p + geom_smooth(method="lm", se=FALSE)
+```
+<li>
+```{r, fig.height=5, echo=FALSE}
+p
+```
+</li>
+
+Visualize Regression (ctd)
+===
+incremental: true
+* Add fitted values
+```{r}
+p <- p + geom_point(aes(x=X, y=y.hat), color="firebrick", shape=1, size=5)    
+```
+<li>
+```{r, fig.height=5, echo=FALSE}
+p
+```
+</li>
+
+Visualize Regression (ctd)
+===
+incremental: true
+* Plot the errors
+```{r, eval=FALSE}
+library(reshape2)
+my.dat$y.plus.e <- my.dat$y - my.dat$e
+my.dat2 <- melt(my.dat, id.vars=c("X"), 
+                measure.vars=c("y","y.plus.e"))
+my.dat2$group = rep(letters[1:11], times=2)
+p + geom_line(aes(x=X, y=value, group=group), 
+              data=my.dat2)
+```
+
+Visualize Regression (ctd)
+===
+incremental: true
+```{r, echo=FALSE}
+library(reshape2)
+my.dat$y.plus.e <- my.dat$y - my.dat$e
+my.dat2 <- melt(my.dat, id.vars=c("X"), measure.vars=c("y","y.plus.e"))
+my.dat2$group = rep(letters[1:11], times=2)
+p + geom_line(aes(x=X, y=value, group=group), data=my.dat2)
+```
+
+Regression - Analytically...
+===
+incremental: true
+* $y = b_0 + b_1X + e$
+* $\overline{y}=b_0+b_1\overline{X}+\overline{e}$
+
+* Solve for $b_1$
+  * $b_1 = \frac{\Sigma\mathbb{Xy}}{\Sigma\mathbb{X}^2}$
+* Create `data.frame` named `dat2` with only `y` and `X` from `my.dat`
+* Get means for `y` and `X` and assign to variables `mu.y` and `mu.X`
+```{r}
+dat2 <- my.dat[,c("y","X")]
+mu.y <- mean(dat2$y)
+mu.X <- mean(dat2$X)
+```
+
+Solve for b_1
+===
+incremental: true
+* Calculate and assign $\mathbb{y}, \mathbb{X}, \mathbb{X}^2, \mathbb{Xy}$ to the `dat2` `data.frame` with variable names `d.y, d.X, d.X.sq, d.Xy`
+```{r}
+dat2$d.y <- dat2$y - mu.y
+dat2$d.X <- dat2$X - mu.X
+dat2$d.X.sq <- dat2$d.X^2
+dat2$d.Xy <- dat2$d.X*dat2$d.y
+head(dat2)
+```
+
+Solve for b_1
+===
+incremental: true
+* Calculate $SS$ for $\mathbb{X}^2$ and $\mathbb{Xy}$ and assign to variables `SSD.X.sq` and `SSD.Xy`
+```{r}
+SSD.X.sq <- sum(dat2$d.X.sq)
+SSD.Xy <- sum(dat2$d.Xy)
+```
+* Calculate $b_1$ and assign to variable `b.1`
+```{r}
+b.1 <- SSD.Xy/SSD.X.sq
+b.1
+```
+* $b_1 = \frac{\Sigma\mathbb{Xy}}{\Sigma\mathbb{X}^2} = \frac{Cov[xy]}{Var[x]} = r_{xy}\frac{s_y}{s_x}$
+
+Solve for b_0
+===
+incremental: true
+* Solve for $b_0$ and assign to variable `b.0`
+```{r}
+b.0 <- mu.y - b.1*mu.X
+b.0
+```
+
+Solve for fitted values and errors
+===
+incremental: true
+$\hat{y} = b_0 + b_1X + e$
+* Calculate $\hat{y}$ and $e$ and assign to the `dat2` `data.frame` as variables `y.hat` and `e`
+```{r}
+dat2$y.hat <- b.0 + b.1*dat2$X
+dat2$e <- dat2$y - dat2$y.hat
+```
+
+Sums of Squares
+===
+incremental: true
+$SS_{TOTAL} = SS_{REGRESSION}$ + $SS_{RESIDUAL}$
+* Calculate $SS_{TOTAL}$, $SS_{REGRESSION}$, and $SS_{RESIDUAL}$, and assign to variables `SSTot, SSRes, SSReg` 
+```{r}
+SSTot <- sum(dat2$d.y^2)
+SSRes <- sum(dat2$e^2)
+SSReg <- SSTot - SSRes
+```
+* Calculate Mean Squares and assign to variables `MSReg, MSRes`
+```{r}
+MSReg <- SSReg/1
+MSRes <- SSRes/(nrow(dat2)-2)
+```
+
+
+F-Test
+===
+incremental: true
+* Calculate F and t statistics
+```{r}
+F.stat <- MSReg/MSRes
+t.stat <- sqrt(F.stat)
+F.stat
+```
+* Calculate $p$-value
+* Recall: $P(X\gt x) = 1 - P(X\lt x)$
+* In `R`, the Cumulative Distribution Function for the $F$ distribution is `pf(F,df1,df2)`
+
+```{r}
+p.val <- 1-pf(F.stat,1,9)
+p.val
+```
+
+Coefficient of Determination
+===
+incremental: true
+* What portion of variance does error account for
+```{r}
+SSRes/SSTot
+```
+* Determine $R^2$ in terms of the residuals
+```{r}
+R.sq <- 1 - SSRes/SSTot
+R.sq
+```
+* Determine $R^2$ in terms of the fitted values 
+```{r}
+SSReg/SSTot
+```
+
+Compare Results
+===
+incremental: true
+Coefficients
+```{r, results='hold'}
+coef(summary(fit1))
+c(b.0,b.1, t.stat)
+```
+
+Fitted values
+```{r}
+round(fitted(fit1) - dat2$y.hat, digits=10)
+```
+
+Compare Results (ctd)
+===
+incremental: true
+
+$SS$, $MS$, and $F$-test
+```{r, results='hold'}
+anova(fit1)
+c(SSReg, SSRes, SSTot)
+c(MSReg, MSRes)
+F.stat
+```
+
+
+Compare Results (ctd)
+===
+incremental: true
+Fitted values
+```{r}
+round(fitted(fit1) - dat2$y.hat, digits=10)
+```
+
+$R^2$
+```{r, results='hold'}
+summary(fit1)$r.squared
+R.sq
+```
+

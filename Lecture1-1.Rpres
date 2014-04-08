@@ -1,0 +1,385 @@
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+ MathJax.Hub.Config({
+   tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+ });
+</script>
+
+R Programming Basics - Block 1
+========================================================
+author: Joe Tidwell / Jeff Chrabaszcz
+date: `r format(Sys.time(), "%a %b %d %Y")`
+transition: none
+width: 1024
+height: 768
+font-family: 'Helvetica'
+
+***
+<br />
+```{r, echo=FALSE}
+require(stats); require(graphics)
+##-- now some "magic" to do the 4 regressions in a loop:
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+}
+
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "blue")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+par(op)
+```
+
+```{r setup, include=FALSE, echo=FALSE}
+require(knitr)
+opts_chunk$set(cache=TRUE, fig.align='center')
+options(digits = 3)
+```
+
+
+RStudio
+========================================================
+
+- **I**ntegrated **D**evelopment **E**nvironment for R
+- looks like the MATLAB interface
+- keeps a lot of information on-screen, avoiding some typing
+- saves your graphs!
+
+Console
+========================================================
+
+The console is like a sandbox - it's where you can interact with R directly and a good place to troubleshoot code.
+Nothing that you write here is saved, though, so you should do most of your coding in the editor and run it from there.
+
+Help me, to help you
+========================================================
+incremental: true
+
+**How do I...**.
+
+```{r}
+help(functionName)
+?functionName
+```
+
+* Load the help file for the function `help`
+
+```{r, eval=FALSE}
+?help
+```
+
+
+Getting Around
+========================================================
+
+**dir** tells you what files are in your current directory.
+
+```{r}
+dir("~")
+```
+
+Getting Around
+========================================================
+
+**getwd** tells you your current working directory.
+If you're using RStudio, this is the file path to the right of the console label.
+
+```{r}
+getwd()
+```
+
+
+Getting Around
+========================================================
+incremental: true
+
+* **setwd** changes the working directory
+* *Windows users must switch backslashes to forward slashes*
+
+```{r, eval=FALSE}
+setwd("~/myFolderName")
+```
+
+* Create a directory on your computer for lab work named "PSYC602_Lab" (Done on your system, not in R)
+* Set "PSYC602_Lab" as your working directory
+
+```{r, eval=FALSE}
+setwd("~/PSYC602_Lab")
+```
+
+* You can also do this in the **Session** menu
+
+Getting Around
+========================================================
+
+**ls** tells you the objects currently in the R workspace.
+
+```{r}
+ls()
+```
+
+You can also view your objects in the **Environment** tab
+
+Packaging
+========================================================
+
+**R** uses a variety of add-on functions found in *packages*.
+
+**install.packages** is self-explanatory.
+You only need to install packages once, even though you'll have to load them for each session of R.
+
+* Install these packages
+
+```{r,eval=FALSE}
+install.packages("plyr")
+install.packages("ggplot2")
+install.packages("gridExtra")
+install.packages("GGally")
+install.packages("data.table")
+install.packages("car")
+install.packages("agricolae")
+install.packages("xtable")
+```
+
+
+Loading Packages
+========================================================
+
+**library** will load installed packages.
+This must be done for each R session.
+
+```{r}
+library(plyr)
+```
+
+Variables
+========================================================
+
+Variables are named objects that can place or keep data in
+
+```{r}
+a <- 10
+a
+```
+
+
+Data structures
+========================================================
+incremental: true
+
+* **vector**
+  * 1 dimension, $n$ elements long
+  * Values are all the *same* class
+* **matrix**
+  * 2(+) dimensions, $n$ X $m$ elements
+  * Values are all the *same* class
+* **data.frame**
+  * 2(+) dimensions, $n$ X $m$ elements
+  * Columns can be *different* classes
+  
+Vector
+========================================================
+incremental: true
+
+```{r}
+my.vector <- c(1, 2, 2, 3, 3, 3, 4, 4, 5)
+my.vector
+
+mixed.vec <- c(1, 2, "apple", "banana", 6)
+mixed.vec
+```
+
+Data Frame
+========================================================
+
+Create a Data Frame
+```{r}
+bacon <- rep(c(0,1), times = 2, each = 2)
+pancakes <- rep(c("blueberry","chocolate chip"), each = 4)
+breakfast <- data.frame(bacon, pancakes, quality = 1:8)
+breakfast
+```
+
+Data Frame
+========================================================
+
+Base `R` and `R` packages often have built-in datasets.
+
+```{r}
+data(anscombe)
+```
+
+<br />
+<br />
+
+*The name of the dataset will be the name of the data.frame!*
+
+Indexing
+========================================================
+
+Indexing is how you get either a specific value, or subset of values, from your variable.
+
+How different variables are indexed depends on the variable type, and what data you want to retrieve.
+
+- square braces, []
+- dollar sign, $
+- at symbol, @
+  - we won't really use @ very much, if at all
+
+vectors
+========================================================
+
+```{r}
+my.vector
+my.vector[4]
+```
+
+```{r}
+my.vector[1:4]
+```
+
+data.frame
+========================================================
+
+```{r}
+data(anscombe)
+my.data <- anscombe
+head(my.data)
+```
+
+data.frame
+========================================================
+
+```{r}
+my.data$x1
+```
+
+
+data.frame
+========================================================
+
+```{r}
+names.col <- c("y1","x1")
+ 
+my.data <- anscombe[,names.col]
+head(my.data)
+```
+
+data.frame
+========================================================
+
+```{r}
+head(my.data)
+```
+
+
+data.frames
+========================================================
+
+```{r}
+my.data$x1[1]
+```
+
+data.frames
+========================================================
+
+```{r}
+my.data[1] 
+``` 
+
+
+data.frames
+========================================================
+
+```{r}
+my.data[,1]  
+```
+
+data.frames
+========================================================
+
+```{r}
+head(my.data[-2]) 
+```
+
+```{r}
+my.data[2,2] 
+```
+
+Functions 
+========================================================
+
+Take some input, produce an output
+
+```{r}
+a <- 1:5
+mean(a)
+mean(1,2,3,4,5)
+```
+
+
+Data Interrogation
+========================================================
+
+- many ways to *see* data
+- usually you don't want all of it at once
+- sometimes you want some kind of summary or description
+
+
+discovering structure
+========================================================
+
+```{r}
+summary(my.data)
+```
+
+seeing raw data
+========================================================
+
+```{r}
+head(my.data)
+```
+
+**tail(breakfast)** also works, with predictable results
+
+Reading data
+========================================================
+
+Read text files
+
+```{r}
+my.file <- read.csv("sample_data.csv")
+```
+
+Both .xls files (Excel) and .sav files (SPSS) can easily be read into R.
+`read.spss` is in the **foreign** package, and `read.xls` is from **gdata**.
+
+Excercise
+========================================================
+* Load the `anscombe` dataset
+* Create a `data.frame` that contains the following variables from `lexdec`:
+  * `y1`, `x1`
+* Generate a summary for your data.frame
+
+
+Excercise Solution
+========================================================
+
+```{r eval=FALSE}
+data(anscombe)
+my.data <- anscombe[,c("y1","x1")]
+summary(my.data)
+```
+
+
+

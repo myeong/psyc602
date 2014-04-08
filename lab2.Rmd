@@ -1,0 +1,146 @@
+
+```{r}
+my.dat <- with(anscombe, data.frame(X=x1, y=y1))
+my.dat
+```
+
+## Population Equation
+$y = \beta_0 + \beta_1 X + \eta$
+
+
+##Null Hypothesis
+$\beta_1 = 0$
+
+
+##Regression
+```{r}
+fit1 <- lm(y~X, data=my.dat)
+library(arm)
+display(fit1) 
+
+```
+Two coeff: slope and intercept
+
+```{r}
+library(ggplot2)
+my.dat$e = residuals(fit1)
+my.dat$y.hat = fitted(fit1)
+qplot(1:nrow(my.dat), y, data=my.dat, main="Time Series - y", xlab="Obs #", ylab="Values")
+p <- ggplot(aes(x=X, y=y), data=my.dat) + geom_point(color="steelblue", size=5)
+p
+```
+
+### Adding regression line
+```{r}
+p <- p + geom_smooth(method="lm", se=FALSE)
+p
+```
+
+### Adding fitted values
+```{r}
+p <- p + geom_point(aes(x=X, y=y.hat), color="firebrick", shape=20, size=5)
+p
+```
+
+## Analytically...
+
+```{r}
+dat2 <- data.frame(y=my.dat$y, X=my.dat$X)
+
+mu.y <- mean(dat2$y)
+mu.x <- mean(dat2$X)
+mu.x
+mu.y
+
+dat2$d.y <- dat2$y - mu.y
+dat2$d.X <- dat2$X - mu.x
+dat2$d.X.sq <- dat2$d.X^2
+dat2$d.Xy <- dat2$d.X * dat2$d.y
+head(dat2)
+
+SSD.X.sq <- sum(dat2$d.X.sq)
+SSD.Xy <- sum(dat2$d.Xy)
+
+b.1 <- SSD.Xy/SSD.X.sq
+
+```
+$b_1 = \frac{Cov[xy]}{Var[x]}$
+
+### What about $b_0$
+
+```{r}
+b.0 <- mu.y - b.1*mu.x
+b.0
+
+```
+
+### Fitted values and errors
+
+```{r}
+
+dat2$y.hat <- b.0 + b.1*dat2$X
+dat2$e <- dat2$y - dat2$y.hat
+```
+
+### Sums of Squares, MS, F-Test
+
+```{r}
+SSTot <- sum(dat2$d.y^2)
+SSRes <- sum(dat2$e^2)
+SSReg <- SSTot - SSRes
+
+MSReg <- SSReg/1
+MSRes <- SSRes/(nrow(dat2)-2)
+
+F.stat <- MSReg/MSRes
+t.stat <- sqrt(F.stat)
+F.stat
+
+```
+
+### p-value: probability bigger than the given value
+P(X>x) = 1-P(X<x)
+
+```{r}
+p.val <- 1-pf(F.stat, 1, 9)
+p.val
+```
+
+
+### Coefficient of Determination
+What portion of variance does error account for
+
+```{r}
+SSRes/SSTot
+```
+$R^2$ in terms of the residuals
+```{r}
+R.sq <- 1 - SSRes/SSTot
+```
+This is equal to cor(dat2$y, dat2$y.hat)^2
+
+### Comparing Results
+####Coefficient
+
+```{r}
+coef(fit1)
+coef(summary(fit1))
+c(b.0,b.1, t.stat)
+```
+####Fitted values
+```{r}
+round(fitted(fit1) - dat2$y.hat, digits=10)
+```
+
+#### F-test
+```{r}
+anova(fit1)
+c(SSReg, SSReg, SSTot)
+c(MSReg, MSReg)
+F.stat
+```
+
+
+
+
+

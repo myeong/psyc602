@@ -1,0 +1,148 @@
+<script type="text/javascript"
+       src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<script type="text/x-mathjax-config">
+ MathJax.Hub.Config({
+   tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+ });
+</script>
+
+ANOVA Stuff II
+========================================================
+author: Joe/Jeff
+date: `r format(Sys.time(), "%a %b %d %Y")`
+transition: none
+font-family: 'Helvetica'
+
+***
+<br />
+```{r, echo=FALSE}
+require(stats); require(graphics)
+##-- now some "magic" to do the 4 regressions in a loop:
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+}
+
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "blue")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+par(op)
+```
+
+```{r setup, include=FALSE, echo=FALSE}
+require(knitr)
+opts_chunk$set(cache=TRUE, fig.align='center')
+options(digits = 3)
+```
+
+Load Some Data
+===
+* Load Data
+```{r}
+library(reshape2)
+my.dat <- ChickWeight[,c("weight","Diet")]
+summary(my.dat)
+```
+
+
+Fixed Versus Random
+===
+incremental: false
+left: 50%
+
+Fixed Effect 
+  * $Y_{ij} = \mu + \alpha_j + \varepsilon_{ij}$
+  * $Yij \sim N(\mu, \sigma^2)$
+  * $H_0: \alpha_j=0, j=1\ldots k$
+  * $\alpha_j = \mu_j - \mu$
+  * $\varepsilon_{ij} \sim N(0,\sigma^2)$
+
+***
+
+Random Effect
+  * $Y_{ij} = \mu + \alpha_j + \varepsilon_{ij}$
+  * $Yij \sim N(\mu, \sigma^2_{\alpha} + \sigma^2)$
+  * $H_0: \sigma^2_{\alpha_j} = 0$
+  * $\alpha_j \sim N(0,\sigma^2_{\alpha})$
+  * $\varepsilon_{ij} \sim N(0,\sigma^2)$
+
+Data
+===
+```{r}
+options(contrasts=c("contr.sum","contr.poly"))
+mydat <- ChickWeight
+head(mydat)
+```
+
+Fixed
+===
+
+```{r}
+fit1 <- weight~Diet
+summary(aov(fit1, mydat))
+```
+
+Random?
+===
+
+```{r}
+fit2 <- weight~Error(Diet)
+summary(aov(fit2, mydat))
+```
+
+Random
+===
+
+```{r}
+fit3 <- weight~Diet+Error(1/Diet)
+summary(aov(fit3, mydat))
+```
+
+Random
+===
+
+```{r}
+fit4 <- weight~+Error(Chick/Diet)
+summary(aov(fit4, mydat))
+```
+
+
+Scheffe's Test 
+===
+*Corrects for All Possible Contrasts!!!*
+<small>
+```{r}
+library(agricolae)
+mc.scheffe <- scheffe.test(aov(fit1,mydat),"Diet", group=FALSE, console=TRUE)
+mc.scheffe$comparison
+```
+</small>
+
+Bonferoni
+===
+<small>
+```{r}
+mc.bonf <- with(mydat, 
+                pairwise.t.test(weight, Diet, 
+                                p.adj="bonf"))
+mc.bonf
+```
+</small>
+
+===
+<small>
+```{r}
+mc.scheffe$comparison
+mc.bonf
+```
+</small>

@@ -4,7 +4,7 @@ Pilot Test - How cultural background affects people's perception of new places?
 # The extent to which people know places VS. Answer correctness
 ```{r}
 library(dplyr)
-data1 <- read.csv("C:/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/fam-correct.csv")
+data1 <- read.csv("/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/fam-correct.csv")
 group_by(data1, id)
 my.dat <- with(data1, data.frame(Familiarity=Familiarity, Correctness=Correctness))
 fit1 <- Familiarity~Correctness
@@ -19,7 +19,7 @@ summary(aov(fit1, my.dat))
 library(arm)
 library(ggplot2)
 library(GGally)
-data2 <- read.csv("C:/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/culture-landmark.csv")
+data2 <- read.csv("/Users/myeong/Dropbox/Research/iConference2014/Pilot_test/culture-landmark.csv")
 my.dat2 <- with(data2, data.frame(CulturalBackground=Background, LandmarkAnswers=RecogRate))
 my.dat21 <- na.omit(my.dat2)
 fit2 <- lm(LandmarkAnswers~CulturalBackground, data=my.dat21)

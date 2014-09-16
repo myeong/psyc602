@@ -1,0 +1,10 @@
+---
+title: "Familiarity_data"
+author: "Myeong Lee"
+---
+
+
+
+```{r}
+summary(cars)
+```
